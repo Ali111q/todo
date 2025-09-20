@@ -12,4 +12,10 @@ public sealed record TodoItemDto(
     PriorityLevel Priority,
     bool IsCompleted,
     DateTime CreatedAtUtc,
-    DateTime? CompletedAtUtc);
+    DateTime? CompletedAtUtc,
+    List<TagDto> Tags);
+
+public sealed record TagDto(
+    Guid Id,
+    string Name,
+    string Color);

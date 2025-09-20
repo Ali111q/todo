@@ -10,6 +10,8 @@ public sealed class AppDbContext : IdentityDbContext<User, Role, Guid>
 {
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<TodoItemTag> TodoItemTags => Set<TodoItemTag>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

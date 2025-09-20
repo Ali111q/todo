@@ -38,6 +38,7 @@ public static class DependencyInjection
 
         services.AddScoped<IRepository<TodoItem>, EfRepository<TodoItem>>();
         services.AddScoped<IRepository<RefreshToken>, EfRepository<RefreshToken>>();
+        services.AddScoped<IRepository<Tag>, EfRepository<Tag>>();
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.Configure<JwtOptions>(options => config.GetSection(JwtOptions.SectionName).Bind(options));
         services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -47,6 +48,8 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton<IDateTime, SystemDateTime>();
+        services.AddScoped<INotificationService, LoggingNotificationService>();
+        services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 
         // HTTP Client Factory
         services.AddHttpClient<IIpLocationService, IpLocationService>(client =>

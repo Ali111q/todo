@@ -6,7 +6,12 @@ namespace TodoListApp.Application.Features.TodoItems.Queries;
 
 public sealed record ListTodoItemsQuery(
     bool? Completed, 
-    DateTime? DueOnOrBefore, 
+    DateTime? DueOnOrBefore,
+    DateTime? DueDateFrom,
+    DateTime? DueDateTo,
+    int? Priority,
+    string? SearchText,
+    List<Guid>? TagIds,
     int Page = 1, 
     int PageSize = 20, 
     string SortBy = "CreatedAt", 

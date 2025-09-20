@@ -10,6 +10,7 @@ using TodoListApp.Infrastructure;
 using TodoListApp.Infrastructure.Persistence;
 using TodoListApp.Application.Abstractions;
 using TodoListApp.Domain.Users;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers(o => o.Filters.Add<ApiExceptionFilter>())
                 .AddNewtonsoftJson();
 
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
@@ -45,7 +47,9 @@ builder.Services.AddSwaggerGen(c =>
     c.SchemaFilter<EnumSchemaFilter>();
 
     // Include XML comments for better documentation
-    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Taskly.Api.xml"), true);
+    var xmlFile = Path.Combine(AppContext.BaseDirectory, "TodoListApp.Api.xml");
+    if (File.Exists(xmlFile))
+        c.IncludeXmlComments(xmlFile, true);
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -75,6 +79,13 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Configure Hangfire (commented out for now - can be enabled in production)
+// builder.Services.AddHangfire(config =>
+// {
+//     config.UsePostgreSqlStorage(builder.Configuration.GetConnectionString("DefaultConnection"));
+// });
+// builder.Services.AddHangfireServer();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
@@ -133,6 +144,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+// SignalR hub can be enabled when properly configured
+// app.MapHub<TodoListApp.Infrastructure.Hubs.TodoItemHub>("/todoItemHub");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -141,6 +154,9 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
     await DataSeeder.SeedAsync(context, userManager, roleManager);
 }
+
+// Background jobs can be configured here when Hangfire is properly set up
+// RecurringJob.AddOrUpdate<IBackgroundJobService>("cleanup-expired-tokens", service => service.CleanupExpiredRefreshTokensAsync(CancellationToken.None), Cron.Daily);
 
 app.Run();
 

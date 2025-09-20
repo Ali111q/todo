@@ -27,11 +27,14 @@ public sealed class ListTodoItemsQueryHandler : IRequestHandler<ListTodoItemsQue
 
         var skip = (request.Page - 1) * request.PageSize;
 
-        var countSpec = new TodoItemByFiltersSpec(ownerId, request.Completed, request.DueOnOrBefore, null, null, request.SortBy, request.SortDescending);
+        var countSpec = new TodoItemByFiltersSpec(ownerId, request.Completed, request.DueOnOrBefore, request.DueDateFrom, request.DueDateTo, request.Priority, request.SearchText, request.TagIds, null, null, request.SortBy, request.SortDescending);
         var totalCount = await _repo.Query(countSpec).CountAsync(ct);
 
-        var dataSpec = new TodoItemByFiltersSpec(ownerId, request.Completed, request.DueOnOrBefore, skip, request.PageSize, request.SortBy, request.SortDescending);
-        var items = await _repo.Query(dataSpec).ToListAsync(ct);
+        var dataSpec = new TodoItemByFiltersSpec(ownerId, request.Completed, request.DueOnOrBefore, request.DueDateFrom, request.DueDateTo, request.Priority, request.SearchText, request.TagIds, skip, request.PageSize, request.SortBy, request.SortDescending);
+        var items = await _repo.Query(dataSpec)
+            .Include(t => t.TodoItemTags)
+            .ThenInclude(tt => tt.Tag)
+            .ToListAsync(ct);
 
         var userIds = items.Select(t => t.UserId).Distinct().ToList();
         var userDict = new Dictionary<Guid, string>();
@@ -55,7 +58,8 @@ public sealed class ListTodoItemsQueryHandler : IRequestHandler<ListTodoItemsQue
             t.Priority.Value,
             t.IsCompleted,
             t.CreatedAt,
-            t.CompletedAtUtc)).ToList();
+            t.CompletedAtUtc,
+            t.TodoItemTags.Select(tt => new TagDto(tt.Tag.Id, tt.Tag.Name, tt.Tag.Color)).ToList())).ToList();
 
         return PagedResultDto<TodoItemDto>.Create(todoItemDtos, totalCount, request.Page, request.PageSize);
     }

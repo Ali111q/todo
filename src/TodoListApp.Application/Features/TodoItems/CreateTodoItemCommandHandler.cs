@@ -16,9 +16,10 @@ public sealed class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoIte
     private readonly UserManager<User> _userManager;
     private readonly ICurrentUser _current;
     private readonly IDateTime _clock;
+    private readonly INotificationService _notificationService;
 
-    public CreateTodoItemCommandHandler(IRepository<TodoItem> repo, UserManager<User> userManager, ICurrentUser current, IDateTime clock)
-    { _repo = repo; _userManager = userManager; _current = current; _clock = clock; }
+    public CreateTodoItemCommandHandler(IRepository<TodoItem> repo, UserManager<User> userManager, ICurrentUser current, IDateTime clock, INotificationService notificationService)
+    { _repo = repo; _userManager = userManager; _current = current; _clock = clock; _notificationService = notificationService; }
 
     public async Task<TodoItemDto> Handle(CreateTodoItemCommand request, CancellationToken ct)
     {
@@ -37,6 +38,9 @@ public sealed class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoIte
         await _repo.AddAsync(todoItem, ct);
         await _repo.SaveChangesAsync(ct);
 
+        // Send notification
+        await _notificationService.NotifyTodoItemCreatedAsync(todoItem.UserId, todoItem.Name.Value, ct);
+
         var user = await _userManager.FindByIdAsync(todoItem.UserId.ToString());
 
         return new TodoItemDto(
@@ -49,6 +53,7 @@ public sealed class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoIte
             todoItem.Priority.Value,
             todoItem.IsCompleted,
             todoItem.CreatedAt,
-            todoItem.CompletedAtUtc);
+            todoItem.CompletedAtUtc,
+            new List<TagDto>());
     }
 }

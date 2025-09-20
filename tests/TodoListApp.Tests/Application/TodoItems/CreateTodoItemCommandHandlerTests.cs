@@ -17,6 +17,7 @@ public class CreateTodoItemCommandHandlerTests
     private readonly Mock<UserManager<User>> _mockUserManager;
     private readonly Mock<ICurrentUser> _mockCurrentUser;
     private readonly Mock<IDateTime> _mockDateTime;
+    private readonly Mock<INotificationService> _mockNotificationService;
     private readonly CreateTodoItemCommandHandler _handler;
     private readonly Guid _userId = Guid.NewGuid();
     private readonly DateTime _now = DateTime.UtcNow;
@@ -29,12 +30,14 @@ public class CreateTodoItemCommandHandlerTests
             userStore.Object, null!, null!, null!, null!, null!, null!, null!, null!);
         _mockCurrentUser = new Mock<ICurrentUser>();
         _mockDateTime = new Mock<IDateTime>();
+        _mockNotificationService = new Mock<INotificationService>();
         
         _handler = new CreateTodoItemCommandHandler(
             _mockRepository.Object,
             _mockUserManager.Object,
             _mockCurrentUser.Object,
-            _mockDateTime.Object);
+            _mockDateTime.Object,
+            _mockNotificationService.Object);
     }
 
     [Fact]

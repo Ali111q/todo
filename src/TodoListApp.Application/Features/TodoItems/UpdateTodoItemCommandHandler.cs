@@ -52,6 +52,7 @@ public sealed class UpdateTodoItemCommandHandler : IRequestHandler<UpdateTodoIte
             todoItem.Priority.Value,
             todoItem.IsCompleted,
             todoItem.CreatedAt,
-            todoItem.CompletedAtUtc);
+            todoItem.CompletedAtUtc,
+            new List<TagDto>());
     }
 }

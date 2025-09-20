@@ -28,10 +28,15 @@ public sealed class TodoItemsController : ControllerBase
         => Ok(await _mediator.Send(cmd, ct));
 
     /// <summary>
-    /// Get paginated list of todo items
+    /// Get paginated list of todo items with advanced filtering
     /// </summary>
     /// <param name="completed">Filter by completion status</param>
-    /// <param name="dueOnOrBefore">Filter by due date</param>
+    /// <param name="dueOnOrBefore">Filter by due date (before or on)</param>
+    /// <param name="dueDateFrom">Filter by due date range (from)</param>
+    /// <param name="dueDateTo">Filter by due date range (to)</param>
+    /// <param name="priority">Filter by priority level (1=Low, 2=Medium, 3=High, 4=Critical)</param>
+    /// <param name="searchText">Search in names and descriptions</param>
+    /// <param name="tagIds">Filter by tag IDs</param>
     /// <param name="page">Page number (default: 1)</param>
     /// <param name="pageSize">Items per page (default: 20)</param>
     /// <param name="sortBy">Sort field: CreatedAt, Name, DueDate, Priority, Completed (default: CreatedAt)</param>
@@ -41,11 +46,20 @@ public sealed class TodoItemsController : ControllerBase
     [HttpGet]
     [ProducesResponseType(200)]
     [ProducesResponseType(401)]
-    public async Task<IActionResult> List([FromQuery] bool? completed, [FromQuery] DateTime? dueOnOrBefore,
-                                          [FromQuery] int page = 1, [FromQuery] int pageSize = 20,
-                                          [FromQuery] string sortBy = "CreatedAt", [FromQuery] bool sortDescending = true,
-                                          CancellationToken ct = default)
-        => Ok(await _mediator.Send(new ListTodoItemsQuery(completed, dueOnOrBefore, page, pageSize, sortBy, sortDescending), ct));
+    public async Task<IActionResult> List(
+        [FromQuery] bool? completed, 
+        [FromQuery] DateTime? dueOnOrBefore,
+        [FromQuery] DateTime? dueDateFrom,
+        [FromQuery] DateTime? dueDateTo,
+        [FromQuery] int? priority,
+        [FromQuery] string? searchText,
+        [FromQuery] List<Guid>? tagIds,
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string sortBy = "CreatedAt", 
+        [FromQuery] bool sortDescending = true,
+        CancellationToken ct = default)
+        => Ok(await _mediator.Send(new ListTodoItemsQuery(completed, dueOnOrBefore, dueDateFrom, dueDateTo, priority, searchText, tagIds, page, pageSize, sortBy, sortDescending), ct));
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTodoItemCommand cmd, CancellationToken ct)

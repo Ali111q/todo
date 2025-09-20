@@ -18,6 +18,9 @@ public sealed class TodoItem : AggregateRoot, ISoftDelete
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAtUtc { get; private set; }
 
+    // Navigation properties
+    public ICollection<TodoItemTag> TodoItemTags { get; private set; } = new List<TodoItemTag>();
+
     private TodoItem(Guid id, Guid userId, TodoItemName name, TodoItemDescription description, DueDate dueDate, TodoItemPriority priority, DateTime nowUtc)
     {
         Id = id;
@@ -65,5 +68,24 @@ public sealed class TodoItem : AggregateRoot, ISoftDelete
         IsDeleted = false;
         DeletedAtUtc = null;
         UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void AddTag(Tag tag)
+    {
+        if (TodoItemTags.Any(tt => tt.TagId == tag.Id))
+            return; // Tag already exists
+
+        TodoItemTags.Add(new TodoItemTag { TodoItemId = Id, TagId = tag.Id });
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void RemoveTag(Guid tagId)
+    {
+        var todoItemTag = TodoItemTags.FirstOrDefault(tt => tt.TagId == tagId);
+        if (todoItemTag != null)
+        {
+            TodoItemTags.Remove(todoItemTag);
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 }

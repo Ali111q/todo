@@ -15,13 +15,15 @@ public sealed class ToggleCompleteTodoItemCommandHandler : IRequestHandler<Toggl
     private readonly UserManager<User> _userManager;
     private readonly ICurrentUser _current;
     private readonly IDateTime _clock;
+    private readonly INotificationService _notificationService;
 
-    public ToggleCompleteTodoItemCommandHandler(IRepository<TodoItem> todoItemRepo, UserManager<User> userManager, ICurrentUser current, IDateTime clock)
+    public ToggleCompleteTodoItemCommandHandler(IRepository<TodoItem> todoItemRepo, UserManager<User> userManager, ICurrentUser current, IDateTime clock, INotificationService notificationService)
     {
         _todoItemRepo = todoItemRepo;
         _userManager = userManager;
         _current = current;
         _clock = clock;
+        _notificationService = notificationService;
     }
 
     public async Task<TodoItemDto> Handle(ToggleCompleteTodoItemCommand request, CancellationToken ct)
@@ -35,6 +37,12 @@ public sealed class ToggleCompleteTodoItemCommandHandler : IRequestHandler<Toggl
         todoItem.ToggleComplete(_clock.UtcNow);
         await _todoItemRepo.SaveChangesAsync(ct);
 
+        // Send notification if completed
+        if (todoItem.IsCompleted)
+        {
+            await _notificationService.NotifyTodoItemCompletedAsync(todoItem.UserId, todoItem.Name.Value, ct);
+        }
+
         var user = await _userManager.FindByIdAsync(todoItem.UserId.ToString());
 
         return new TodoItemDto(
@@ -47,6 +55,7 @@ public sealed class ToggleCompleteTodoItemCommandHandler : IRequestHandler<Toggl
             todoItem.Priority.Value,
             todoItem.IsCompleted,
             todoItem.CreatedAt,
-            todoItem.CompletedAtUtc);
+            todoItem.CompletedAtUtc,
+            new List<TagDto>());
     }
 }
