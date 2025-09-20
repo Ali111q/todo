@@ -1,0 +1,42 @@
+# Use the official .NET 8 SDK image for building
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+# Set the working directory
+WORKDIR /src
+
+# Copy solution file
+COPY ["Todo List App.sln", "."]
+
+# Copy project files
+COPY ["src/Taskly.Api/Taskly.Api.csproj", "src/Taskly.Api/"]
+COPY ["src/Taskly.Application/Taskly.Application.csproj", "src/Taskly.Application/"]
+COPY ["src/Taskly.Domain/Taskly.Domain.csproj", "src/Taskly.Domain/"]
+COPY ["src/Taskly.Infrastructure/Taskly.Infrastructure.csproj", "src/Taskly.Infrastructure/"]
+
+# Restore dependencies
+RUN dotnet restore "src/Taskly.Api/Taskly.Api.csproj"
+
+# Copy all source code
+COPY . .
+
+# Build the application
+WORKDIR "/src/src/Taskly.Api"
+RUN dotnet build "Taskly.Api.csproj" -c Release -o /app/build
+
+# Publish the application
+FROM build AS publish
+RUN dotnet publish "Taskly.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Use the official .NET 8 runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+
+# Copy the published application
+COPY --from=publish /app/publish .
+
+# Expose the port
+EXPOSE 8080
+EXPOSE 8081
+
+# Set the entry point
+ENTRYPOINT ["dotnet", "Taskly.Api.dll"]
